@@ -4,8 +4,8 @@ import "./App.css";
 
 function App() {
     const [item, setItem] = useState({
-        title: "",
-        complete: false,
+        Title: "",
+        Complete: false,
     });
     const [allItems, setAllItems] = useState([]);
     const [err, setErr] = useState([]);
@@ -17,8 +17,14 @@ function App() {
 
             try {
                 const response = await axios.get(apiUrl);
-                console.log(response.data);
-                setAllItems(response.data);
+                const sortedItems = response.data.sort((a, b) => {
+                    if (a.Complete === b.Complete) return 0;
+                    if (a.Complete) return 1;
+                    return -1;
+                });
+
+                setAllItems(sortedItems);
+                // setAllItems(response.data);
             } catch (err) {
                 setErr(err.message);
                 console.error("Error fetching data with axios:", err);
@@ -31,36 +37,84 @@ function App() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        setAllItems([...allItems, item]);
-        setItem({ title: "", complete: false });
+        try {
+            // Define the API endpoint
+            const apiUrl = import.meta.env.VITE_API_URL + "/add"; // assuming the endpoint is '/add'
+
+            // Make the POST request with the new item
+            const response = await axios.post(apiUrl, item);
+
+            // If successful, update local state and reset the input
+
+            const sortedItems = [...allItems, response.data].sort((a, b) => {
+                if (a.Complete === b.Complete) return 0;
+                if (a.Complete) return 1;
+                return -1;
+            });
+            setAllItems(sortedItems);
+            setItem({ Title: "", Complete: false });
+        } catch (error) {
+            console.error("Error while adding item:", error);
+        }
     };
 
     const handleDelete = async (e, indexToDelete) => {
         e.preventDefault();
 
-        const newItems = allItems.filter(
-            (item, index) => index !== indexToDelete
-        );
-        setAllItems(newItems);
+        // Get the _id of the item to delete
+        const idToDelete = allItems[indexToDelete]._id;
+
+        try {
+            // Define the API endpoint
+            const apiUrl =
+                import.meta.env.VITE_API_URL + `/delete/${idToDelete}`;
+
+            // Send the DELETE request
+            await axios.delete(apiUrl);
+
+            // If successful, update local state
+            const newItems = allItems.filter(
+                (item, index) => index !== indexToDelete
+            );
+            setAllItems(newItems);
+        } catch (error) {
+            console.error("Error while deleting item:", error);
+            // Handle error (e.g., notify the user, retry, etc.)
+        }
     };
 
     const handleChange = async (e, indexToChange) => {
         e.preventDefault();
 
-        const newItems = allItems.map((item, index) => {
-            if (index === indexToChange) {
-                return { title: item.title, complete: !item.complete };
-            }
-            return item;
-        });
+        // Extract the _id of the item you want to change
+        const itemId = allItems[indexToChange]._id;
+        const newCompleteValue = !allItems[indexToChange].Complete;
 
-        const sortedItems = newItems.sort((a, b) => {
-            if (a.complete === b.complete) return 0;
-            if (a.complete) return 1;
-            return -1;
-        });
+        try {
+            // Define the API endpoint
+            const apiUrl = import.meta.env.VITE_API_URL + `/${itemId}/complete`;
 
-        setAllItems(sortedItems);
+            // Send the PUT request with the new 'Complete' value
+            await axios.put(apiUrl, { complete: newCompleteValue });
+
+            // If the PUT request is successful, then update local state
+            const newItems = allItems.map((item, index) => {
+                if (index === indexToChange) {
+                    return { ...item, Complete: newCompleteValue };
+                }
+                return item;
+            });
+
+            const sortedItems = newItems.sort((a, b) => {
+                if (a.Complete === b.Complete) return 0;
+                if (a.Complete) return 1;
+                return -1;
+            });
+
+            setAllItems(sortedItems);
+        } catch (error) {
+            console.error("Error while updating item:", error);
+        }
     };
 
     const handleKeyDown = (e) => {
@@ -80,9 +134,9 @@ function App() {
                         <input
                             type="text"
                             placeholder="Add Item Here"
-                            value={item.title}
+                            value={item.Title}
                             onChange={(e) =>
-                                setItem({ ...item, title: e.target.value })
+                                setItem({ ...item, Title: e.target.value })
                             }
                             onKeyDown={handleKeyDown}
                             required
@@ -99,11 +153,11 @@ function App() {
                                 <label
                                     className="itemValue"
                                     style={{
-                                        backgroundColor: savedItem.complete
+                                        backgroundColor: savedItem.Complete
                                             ? "lightgreen"
                                             : "white",
                                     }}>
-                                    {savedItem.title}
+                                    {savedItem.Title}
                                 </label>
                                 <button
                                     onClick={(e) => handleDelete(e, index)}
@@ -113,7 +167,7 @@ function App() {
                                 <button
                                     onClick={(e) => handleChange(e, index)}
                                     className="btn">
-                                    <p>✓</p>
+                                    <p>{savedItem.Complete ? "x" : "✓"}</p>
                                 </button>
                             </div>
                         ))}
