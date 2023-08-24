@@ -62,4 +62,14 @@ router.put("/:id/complete", async (req, res) => {
     }
 });
 
+router.get("/all", async (req, res) => {
+    try {
+        // Fetch all items from the database
+        const items = await listModel.find();
+        res.status(200).json(items);
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
 module.exports = router;

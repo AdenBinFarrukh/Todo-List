@@ -12,17 +12,20 @@ function App() {
 
     // Load data from MongoDB
     useEffect(() => {
-        const apiUrl = import.meta.env.VITE_API_URL;
+        const fetchData = async () => {
+            const apiUrl = import.meta.env.VITE_API_URL + "/all";
 
-        axios
-            .get(apiUrl)
-            .then((response) => {
+            try {
+                const response = await axios.get(apiUrl);
+                console.log(response.data);
                 setAllItems(response.data);
-            })
-            .catch((err) => {
+            } catch (err) {
                 setErr(err.message);
                 console.error("Error fetching data with axios:", err);
-            });
+            }
+        };
+
+        fetchData();
     }, []);
 
     const handleSubmit = async (e) => {
