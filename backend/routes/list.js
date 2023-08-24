@@ -6,9 +6,8 @@ router.post("/add", async (req, res) => {
         console.log(req.body.title);
         //create new item
         const newItem = new listModel({
-            Title: req.body.title,
-            Details: req.body.details,
-            Complete: req.body.complete,
+            Title: req.body.Title,
+            Complete: req.body.Complete,
         });
         //save user and respond
         const item = await newItem.save();
