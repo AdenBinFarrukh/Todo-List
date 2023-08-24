@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import "./App.css";
 
 function App() {
@@ -7,17 +8,22 @@ function App() {
         complete: false,
     });
     const [allItems, setAllItems] = useState([]);
+    const [err, setErr] = useState([]);
 
-    // // Load data from localStorage on mount
-    // useEffect(() => {
-    //     const articlesFromLocalStorage = JSON.parse(
-    //         localStorage.getItem("articles")
-    //     );
+    // Load data from MongoDB
+    useEffect(() => {
+        const apiUrl = import.meta.env.VITE_API_URL;
 
-    //     if (articlesFromLocalStorage) {
-    //         setAllArticles(articlesFromLocalStorage);
-    //     }
-    // }, []);
+        axios
+            .get(apiUrl)
+            .then((response) => {
+                setAllItems(response.data);
+            })
+            .catch((err) => {
+                setErr(err.message);
+                console.error("Error fetching data with axios:", err);
+            });
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -84,6 +90,7 @@ function App() {
                         </button>
                     </form>
                     <div className="results">
+                        {err && err}
                         {allItems.map((savedItem, index) => (
                             <div key={`link-${index}`} className="output">
                                 <label
